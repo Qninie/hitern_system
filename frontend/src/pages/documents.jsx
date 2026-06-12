@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Search, Filter, FileText, Check, X, Eye } from "lucide-react";
+import { Search, Filter, FileText, Check, X, Eye, RefreshCw } from "lucide-react";
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("hiternUser")) || {};
+  } catch {
+    return {};
+  }
+};
 
 function Documents() {
   const [documents, setDocuments] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [loading, setLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState("");
+  const user = getStoredUser();
+  const role = (user.role || "intern").toLowerCase();
+  const canReview = role === "supervisor" || role === "hr";
 
-  // Fetch documents
   const fetchDocuments = async () => {
     try {
       setLoading(true);
@@ -28,56 +38,51 @@ function Documents() {
     fetchDocuments();
   }, []);
 
-  // Filter logic
   const filteredDocuments = documents.filter((doc) => {
-    const matchesSearch = doc.title
+    const title = doc.title || "";
+    const uploader = doc.uploaded_by || "";
+    const matchesSearch = `${title} ${uploader}`
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesFilter =
       filterStatus === "all" || doc.status === filterStatus;
+    const matchesRole =
+      canReview || !user.email || uploader.toLowerCase() === user.email.toLowerCase();
 
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesFilter && matchesRole;
   });
 
-  // Approve
-  const handleApprove = async (docId) => {
+  const documentCounts = documents.reduce(
+    (counts, doc) => ({
+      ...counts,
+      [doc.status]: (counts[doc.status] || 0) + 1,
+    }),
+    { pending: 0, approved: 0, rejected: 0 }
+  );
+
+  const handleStatusChange = async (docId, status) => {
     try {
       const res = await axios.post(
         "http://localhost:5001/approve-document",
         {
           documentId: docId,
-          status: "approved",
+          status,
         }
       );
 
       if (res.data.success) {
-        fetchDocuments(); // refresh
+        setActionMessage(`Document ${status}.`);
+        fetchDocuments();
       }
-    } catch (err) {
-      alert("Error approving document");
+    } catch {
+      setActionMessage(`Error updating document status.`);
     }
   };
 
-  // Reject
-  const handleReject = async (docId) => {
-    try {
-      const res = await axios.post(
-        "http://localhost:5001/approve-document",
-        {
-          documentId: docId,
-          status: "rejected",
-        }
-      );
-
-      if (res.data.success) {
-        fetchDocuments(); // refresh
-      }
-    } catch (err) {
-      alert("Error rejecting document");
-    }
+  const handleView = (doc) => {
+    setActionMessage(`Viewing "${doc.title}". File preview can be connected when file upload storage is added.`);
   };
 
-  // Status badge style
   const getStatusBadge = (status) => {
     const styles = {
       pending: "bg-yellow-100 text-yellow-800",
@@ -88,25 +93,41 @@ function Documents() {
   };
 
   return (
-    <div className="p-8 space-y-6 bg-gray-50 min-h-screen">
-      {/* Header */}
+    <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-800 mb-1">
-          Document Approval
+        <h1 className="text-2xl font-bold text-gray-900">
+          {canReview ? "Document Review" : "My Documents"}
         </h1>
-        <p className="text-gray-500 text-sm">
-          Review and approve documents in Hitern System
+        <p className="mt-1 text-sm text-gray-500">
+          {canReview
+            ? "Review submitted documents and update approval status."
+            : "Track documents you submitted for internship approval."}
         </p>
       </div>
 
-      {/* Search + Filter */}
-      <div className="bg-white p-4 rounded-xl border shadow-sm flex flex-col md:flex-row gap-4">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-lg border bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-gray-500">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.pending}</p>
+        </div>
+        <div className="rounded-lg border bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-gray-500">Approved</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.approved}</p>
+        </div>
+        <div className="rounded-lg border bg-white p-5 shadow-sm">
+          <p className="text-sm font-medium text-gray-500">Rejected</p>
+          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.rejected}</p>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-4 rounded-lg border bg-white p-4 shadow-sm md:flex-row">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search documents..."
-            className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 outline-none"
+            placeholder="Search title or uploader..."
+            value={searchTerm}
+            className="w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
@@ -114,7 +135,8 @@ function Documents() {
         <div className="flex items-center gap-2">
           <Filter className="w-5 h-5 text-gray-400" />
           <select
-            className="border rounded-lg px-4 py-2 focus:ring-2 focus:ring-red-500"
+            value={filterStatus}
+            className="rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
             onChange={(e) => setFilterStatus(e.target.value)}
           >
             <option value="all">All Status</option>
@@ -123,10 +145,23 @@ function Documents() {
             <option value="rejected">Rejected</option>
           </select>
         </div>
+
+        <button
+          onClick={fetchDocuments}
+          className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </button>
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
+      {actionMessage && (
+        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {actionMessage}
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
         {loading ? (
           <div className="p-10 text-center text-gray-500">
             Loading documents...
@@ -136,16 +171,19 @@ function Documents() {
             <table className="w-full text-left">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-6 py-4 text-xs text-gray-500 uppercase">
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
                     Document
                   </th>
-                  <th className="px-6 py-4 text-xs text-gray-500 uppercase">
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
                     Uploaded By
                   </th>
-                  <th className="px-6 py-4 text-xs text-gray-500 uppercase">
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Signature
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-xs text-gray-500 uppercase text-right">
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500 text-right">
                     Actions
                   </th>
                 </tr>
@@ -153,9 +191,9 @@ function Documents() {
 
               <tbody className="divide-y">
                 {filteredDocuments.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-gray-50">
+                  <tr key={doc.id} className="hover:bg-gray-50/80">
                     <td className="px-6 py-4 flex items-center gap-3">
-                      <div className="p-2 bg-red-50 rounded-lg">
+                      <div className="rounded-lg bg-red-50 p-2">
                         <FileText className="w-5 h-5 text-red-600" />
                       </div>
                       <span className="font-medium text-gray-700">
@@ -165,6 +203,10 @@ function Documents() {
 
                     <td className="px-6 py-4 text-gray-500">
                       {doc.uploaded_by}
+                    </td>
+
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      {doc.need_signature ? "Required" : "Not required"}
                     </td>
 
                     <td className="px-6 py-4">
@@ -179,22 +221,28 @@ function Documents() {
 
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
-                        <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg">
+                        <button
+                          onClick={() => handleView(doc)}
+                          title="View document"
+                          className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                        >
                           <Eye className="w-5 h-5" />
                         </button>
 
-                        {doc.status === "pending" && (
+                        {canReview && doc.status === "pending" && (
                           <>
                             <button
-                              onClick={() => handleApprove(doc.id)}
-                              className="p-2 hover:text-green-600 hover:bg-green-50 rounded-lg"
+                              onClick={() => handleStatusChange(doc.id, "approved")}
+                              title="Approve document"
+                              className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600"
                             >
                               <Check className="w-5 h-5" />
                             </button>
 
                             <button
-                              onClick={() => handleReject(doc.id)}
-                              className="p-2 hover:text-red-600 hover:bg-red-50 rounded-lg"
+                              onClick={() => handleStatusChange(doc.id, "rejected")}
+                              title="Reject document"
+                              className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
                             >
                               <X className="w-5 h-5" />
                             </button>
@@ -207,9 +255,8 @@ function Documents() {
               </tbody>
             </table>
 
-
             {filteredDocuments.length === 0 && (
-              <div className="p-10 text-center text-red-500">
+              <div className="p-10 text-center text-sm text-gray-500">
                 No documents found.
               </div>
             )}

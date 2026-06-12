@@ -26,11 +26,9 @@ app.post("/login", (req, res) => {
 
   const { email, password } = req.body
 
-  const userEmail = email.toLowerCase()
-
   const sql = "SELECT * FROM users WHERE email = ? AND password = ?"
 
-  db.query(sql, [email, password], (err, result) => {
+  db.query(sql, [email.toLowerCase(), password], (err, result) => {
 
     if (err) {
       return res.status(500).json({ error: err })
@@ -62,12 +60,19 @@ app.post("/upload-document", (req, res) => {
 
   const { title, uploadedBy, needSignature } = req.body
 
+  if (!title || !uploadedBy) {
+    return res.json({
+      success: false,
+      message: "Title and uploader are required"
+    })
+  }
+
   const sql = `
     INSERT INTO documents (title, uploaded_by, need_signature, status)
     VALUES (?, ?, ?, 'pending')
   `
 
-  db.query(sql, [title, uploadedBy, needSignature], (err, result) => {
+  db.query(sql, [title, uploadedBy, Boolean(needSignature)], (err, result) => {
 
     if (err) {
       return res.status(500).json({ error: err })
@@ -96,7 +101,7 @@ app.post("/upload-document", (req, res) => {
 
 app.get("/documents", (req, res) => {
 
-  const sql = "SELECT * FROM documents"
+  const sql = "SELECT * FROM documents ORDER BY id DESC"
 
   db.query(sql, (err, result) => {
 
@@ -143,22 +148,4 @@ app.get("/notifications", (req, res) => {
   ]
  })
 
-})
-
-// approve document API
-app.post("/approve-document", (req, res) => {
-  const { documentId, status } = req.body
-
-  const sql = "UPDATE documents SET status = ? WHERE id = ?"
-
-  db.query(sql, [status, documentId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ error: err })
-    }
-
-    res.json({
-      success: true,
-      message: "Document status updated"
-    })
-  })
 })

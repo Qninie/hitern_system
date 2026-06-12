@@ -1,74 +1,125 @@
 import { NavLink } from "react-router-dom";
+import {
+  Bell,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  Upload,
+  UserRound,
+} from "lucide-react";
+
+const defaultUser = {
+  name: "Intern User",
+  email: "intern@test.com",
+  role: "intern",
+};
+
+const getStoredUser = () => {
+  try {
+    const storedUser = localStorage.getItem("hiternUser");
+    return storedUser ? JSON.parse(storedUser) : defaultUser;
+  } catch {
+    return defaultUser;
+  }
+};
+
+const navItems = [
+  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/upload", label: "Upload", icon: Upload },
+  { to: "/documents", label: "Documents", icon: FileText },
+  { to: "/notifications", label: "Notifications", icon: Bell },
+];
 
 function Layout({ children }) {
+  const user = getStoredUser();
+  const role = (user.role || "intern").toLowerCase();
+  const displayName = user.name || user.email || "Hitern User";
+
+  const handleRoleChange = (event) => {
+    const nextUser = { ...user, role: event.target.value };
+    localStorage.setItem("hiternUser", JSON.stringify(nextUser));
+    window.location.reload();
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("hiternUser");
+    window.location.href = "/login";
+  };
+
   return (
-    <div className="flex">
+    <div className="min-h-screen bg-gray-50 lg:flex">
 
-      {/* Sidebar */}
-      <div className="w-64 bg-red-600 text-white min-h-screen p-4">
-        <h2 className="text-xl font-bold mb-6">Hitern</h2>
+      <aside className="bg-red-700 text-white lg:fixed lg:inset-y-0 lg:left-0 lg:w-72">
+        <div className="flex h-full flex-col p-5">
+          <div className="mb-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-red-100">
+              Hitern System
+            </p>
+            <h1 className="mt-2 text-2xl font-bold">Document Center</h1>
+          </div>
 
-        <ul className="space-y-3">
+          <nav className="space-y-2">
+            {navItems.map((item) => {
+              const Icon = item.icon;
 
-          <li>
-            <NavLink
-              to="/"
-              className={({ isActive }) =>
-                isActive
-                  ? "block bg-red-800 p-2 rounded"
-                  : "block hover:bg-red-500 p-2 rounded"
-              }
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/"}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                      isActive
+                        ? "bg-white text-red-700 shadow-sm"
+                        : "text-red-50 hover:bg-red-600"
+                    }`
+                  }
+                >
+                  <Icon className="h-5 w-5" />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          <div className="mt-auto rounded-lg bg-red-800/60 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-red-700">
+                <UserRound className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{displayName}</p>
+                <p className="text-xs capitalize text-red-100">{role}</p>
+              </div>
+            </div>
+
+            <label className="mt-4 block text-xs font-medium text-red-100">
+              Preview role
+            </label>
+            <select
+              value={role}
+              onChange={handleRoleChange}
+              className="mt-1 w-full rounded-lg border border-red-500 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-white"
             >
-              Dashboard
-            </NavLink>
-          </li>
+              <option value="intern">Intern</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="hr">HR</option>
+            </select>
 
-          <li>
-            <NavLink
-              to="/upload"
-              className={({ isActive }) =>
-                isActive
-                  ? "block bg-red-800 p-2 rounded"
-                  : "block hover:bg-red-500 p-2 rounded"
-              }
+            <button
+              onClick={handleLogout}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500 px-3 py-2 text-sm font-medium text-red-50 hover:bg-red-600"
             >
-              Upload
-            </NavLink>
-          </li>
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          </div>
+        </div>
+      </aside>
 
-          <li>
-            <NavLink
-              to="/documents"
-              className={({ isActive }) =>
-                isActive
-                  ? "block bg-red-800 p-2 rounded"
-                  : "block hover:bg-red-500 p-2 rounded"
-              }
-            >
-              Documents
-            </NavLink>
-          </li>
-
-          <li>
-            <NavLink
-              to="/notifications"
-              className={({ isActive }) =>
-                isActive
-                  ? "block bg-red-800 p-2 rounded"
-                  : "block hover:bg-red-500 p-2 rounded"
-              }
-            >
-              Notifications
-            </NavLink>
-          </li>
-
-        </ul>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 p-6 bg-gray-50">
+      <main className="min-h-screen flex-1 p-4 sm:p-6 lg:ml-72 lg:p-8">
         {children}
-      </div>
+      </main>
 
     </div>
   );

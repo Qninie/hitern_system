@@ -3,6 +3,8 @@ import { Routes, Route } from "react-router-dom"
 import Login from "./pages/login"
 import UploadDocument from "./pages/uploadDocument"
 import Documents from "./pages/documents"
+import Dashboard from "./pages/dashboard"
+import Notifications from "./components/notification"
 import Layout from "./layout"
 
 function App() {
@@ -17,7 +19,7 @@ function App() {
         path="/"
         element={
           <Layout>
-            <Documents />
+            <Dashboard />
           </Layout>
         }
       />
@@ -36,6 +38,15 @@ function App() {
         element={
           <Layout>
             <Documents />
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/notifications"
+        element={
+          <Layout>
+            <Notifications />
           </Layout>
         }
       />

@@ -5,6 +5,7 @@ import UploadDocument from "./pages/uploadDocument"
 import Documents from "./pages/documents"
 import Dashboard from "./pages/dashboard"
 import Notifications from "./components/notification"
+import Users from "./pages/users"
 import Layout from "./layout"
 
 function App() {
@@ -47,6 +48,15 @@ function App() {
         element={
           <Layout>
             <Notifications />
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/users"
+        element={
+          <Layout>
+            <Users />
           </Layout>
         }
       />

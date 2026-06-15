@@ -6,6 +6,7 @@ import {
   LogOut,
   Upload,
   UserRound,
+  Users,
 } from "lucide-react";
 
 const defaultUser = {
@@ -30,21 +31,21 @@ const navItems = [
   { to: "/notifications", label: "Notifications", icon: Bell },
 ];
 
+const hrNavItems = [
+  { to: "/users", label: "Users", icon: Users },
+];
+
 function Layout({ children }) {
   const user = getStoredUser();
   const role = (user.role || "intern").toLowerCase();
   const displayName = user.name || user.email || "Hitern User";
 
-  const handleRoleChange = (event) => {
-    const nextUser = { ...user, role: event.target.value };
-    localStorage.setItem("hiternUser", JSON.stringify(nextUser));
-    window.location.reload();
-  };
-
   const handleLogout = () => {
     localStorage.removeItem("hiternUser");
     window.location.href = "/login";
   };
+
+  const visibleNavItems = role === "hr" ? [...navItems, ...hrNavItems] : navItems;
 
   return (
     <div className="min-h-screen bg-gray-50 lg:flex">
@@ -59,7 +60,7 @@ function Layout({ children }) {
           </div>
 
           <nav className="space-y-2">
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const Icon = item.icon;
 
               return (
@@ -93,22 +94,9 @@ function Layout({ children }) {
               </div>
             </div>
 
-            <label className="mt-4 block text-xs font-medium text-red-100">
-              Preview role
-            </label>
-            <select
-              value={role}
-              onChange={handleRoleChange}
-              className="mt-1 w-full rounded-lg border border-red-500 bg-white px-3 py-2 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-white"
-            >
-              <option value="intern">Intern</option>
-              <option value="supervisor">Supervisor</option>
-              <option value="hr">HR</option>
-            </select>
-
             <button
               onClick={handleLogout}
-              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500 px-3 py-2 text-sm font-medium text-red-50 hover:bg-red-600"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500 px-3 py-2 text-sm font-medium text-red-50 hover:bg-red-600"
             >
               <LogOut className="h-4 w-4" />
               Logout

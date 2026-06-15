@@ -59,11 +59,15 @@ function Login() {
     setLoading(true)
 
     try {
-      const res = await axios.post("http://localhost:5001/login", {
-        email: email.trim().toLowerCase(),
-        password,
-        role,
-      })
+      const res = await axios.post(
+        "http://localhost:5001/login",
+        {
+          email: email.trim().toLowerCase(),
+          password,
+          role,
+        },
+        { timeout: 8000 }
+      )
 
       if (res.data.success) {
         localStorage.setItem("hiternUser", JSON.stringify(res.data.user))
@@ -72,7 +76,7 @@ function Login() {
         setError(res.data.message || "Login failed")
       }
     } catch {
-      setError("Cannot connect to the server. Please try again.")
+      setError("Login is taking too long. Please check that the backend and MySQL are running.")
     } finally {
       setLoading(false)
     }
@@ -85,13 +89,17 @@ function Login() {
     setLoading(true)
 
     try {
-      const res = await axios.post("http://localhost:5001/signup-request", {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password,
-        role,
-        supervisorEmail: supervisorEmail.trim().toLowerCase(),
-      })
+      const res = await axios.post(
+        "http://localhost:5001/signup-request",
+        {
+          name: name.trim(),
+          email: email.trim().toLowerCase(),
+          password,
+          role,
+          supervisorEmail: supervisorEmail.trim().toLowerCase(),
+        },
+        { timeout: 8000 }
+      )
 
       if (res.data.success) {
         setMessage("Signup request sent. Please wait for HR approval before login.")
@@ -100,7 +108,7 @@ function Login() {
         setError(res.data.message || "Signup failed")
       }
     } catch {
-      setError("Cannot send signup request right now.")
+      setError("Signup is taking too long. Please check that the backend and MySQL are running.")
     } finally {
       setLoading(false)
     }

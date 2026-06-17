@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import { Search, Filter, FileText, Check, X, Eye, RefreshCw } from "lucide-react";
 
@@ -20,10 +20,15 @@ function Documents() {
   const role = (user.role || "intern").toLowerCase();
   const canReview = role === "supervisor" || role === "hr";
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5001/documents");
+      const res = await axios.get("http://localhost:5001/documents", {
+        params: {
+          role,
+          email: user.email,
+        },
+      });
       if (res.data.success) {
         setDocuments(res.data.documents);
       }
@@ -32,11 +37,11 @@ function Documents() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [role, user.email]);
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   const filteredDocuments = documents.filter((doc) => {
     const title = doc.title || "";
@@ -80,7 +85,40 @@ function Documents() {
   };
 
   const handleView = (doc) => {
-    setActionMessage(`Viewing "${doc.title}". File preview can be connected when file upload storage is added.`);
+    if (doc.file_path) {
+      window.open(`http://localhost:5001/uploads/${doc.file_path}`, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    setActionMessage(`File: ${doc.file_path || "No file selected"} for "${doc.title}".`);
+  };
+
+  const getDeadlineText = (dueDate) => {
+    if (!dueDate) return "No due date";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft < 0) return `${Math.abs(daysLeft)} day(s) overdue`;
+    if (daysLeft === 0) return "Due today";
+    return `${daysLeft} day(s) left`;
+  };
+
+  const getDeadlineBadge = (dueDate) => {
+    if (!dueDate) return "bg-gray-100 text-gray-700";
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
+
+    if (daysLeft < 0) return "bg-red-100 text-red-800";
+    if (daysLeft <= 3) return "bg-yellow-100 text-yellow-800";
+    return "bg-green-100 text-green-800";
   };
 
   const getStatusBadge = (status) => {
@@ -178,6 +216,12 @@ function Documents() {
                     Uploaded By
                   </th>
                   <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Type / File
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
+                    Due Date
+                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
                     Signature
                   </th>
                   <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
@@ -203,6 +247,25 @@ function Documents() {
 
                     <td className="px-6 py-4 text-gray-500">
                       {doc.uploaded_by}
+                    </td>
+
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <span className="block font-medium text-gray-700">
+                        {doc.document_type || "Document"}
+                      </span>
+                      <span className="block max-w-40 truncate">
+                        {doc.file_path || "No file selected"}
+                      </span>
+                    </td>
+
+                    <td className="px-6 py-4">
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-medium ${getDeadlineBadge(
+                          doc.due_date
+                        )}`}
+                      >
+                        {getDeadlineText(doc.due_date)}
+                      </span>
                     </td>
 
                     <td className="px-6 py-4 text-sm text-gray-500">

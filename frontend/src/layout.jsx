@@ -29,6 +29,7 @@ const navItems = [
   { to: "/upload", label: "Upload", icon: Upload },
   { to: "/documents", label: "Documents", icon: FileText },
   { to: "/notifications", label: "Notifications", icon: Bell },
+  { to: "/profile", label: "Profile", icon: UserRound },
 ];
 
 const hrNavItems = [

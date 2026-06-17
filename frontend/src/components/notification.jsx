@@ -2,14 +2,28 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Bell } from "lucide-react";
 
+const getStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("hiternUser")) || {};
+  } catch {
+    return {};
+  }
+};
+
 function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const user = getStoredUser();
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get("http://localhost:5001/notifications");
+        const res = await axios.get("http://localhost:5001/notifications", {
+          params: {
+            role: user.role,
+            email: user.email,
+          },
+        });
         setNotifications(res.data.notifications || []);
       } catch {
         setNotifications([]);
@@ -19,7 +33,7 @@ function Notifications() {
     };
 
     fetchNotifications();
-  }, []);
+  }, [user.email, user.role]);
 
   return (
     <div className="space-y-6">

@@ -6,6 +6,7 @@ import Documents from "./pages/documents"
 import Dashboard from "./pages/dashboard"
 import Notifications from "./components/notification"
 import Users from "./pages/users"
+import Profile from "./pages/profile"
 import Layout from "./layout"
 
 function App() {
@@ -57,6 +58,15 @@ function App() {
         element={
           <Layout>
             <Users />
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <Layout>
+            <Profile />
           </Layout>
         }
       />

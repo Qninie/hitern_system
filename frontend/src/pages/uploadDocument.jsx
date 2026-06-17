@@ -13,11 +13,17 @@ const getStoredUser = () => {
 function UploadDocument() {
 
   const [title, setTitle] = useState("")
+  const [documentType, setDocumentType] = useState("Report")
+  const [fileName, setFileName] = useState("")
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [dueDate, setDueDate] = useState("")
+  const [assignedTo, setAssignedTo] = useState("")
   const [needSignature, setNeedSignature] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const user = getStoredUser()
   const role = (user.role || "intern").toLowerCase()
+  const defaultSupervisor = user.supervisor_email || ""
 
   const handleUpload = async () => {
     if (!title.trim()) {
@@ -29,14 +35,28 @@ function UploadDocument() {
     setMessage("")
 
     try {
-      const res = await axios.post("http://localhost:5001/upload-document", {
-        title: title.trim(),
-        uploadedBy: user.email || "intern@test.com",
-        needSignature: needSignature
-      })
+      const formData = new FormData()
+      formData.append("title", title.trim())
+      formData.append("uploadedBy", user.email || "intern@test.com")
+      formData.append("needSignature", needSignature)
+      formData.append("dueDate", dueDate)
+      formData.append("fileName", fileName)
+      formData.append("documentType", documentType)
+      formData.append("assignedTo", assignedTo || defaultSupervisor)
+
+      if (selectedFile) {
+        formData.append("documentFile", selectedFile)
+      }
+
+      const res = await axios.post("http://localhost:5001/upload-document", formData)
 
       if (res.data.success) {
         setTitle("")
+        setDocumentType("Report")
+        setFileName("")
+        setSelectedFile(null)
+        setDueDate("")
+        setAssignedTo("")
         setNeedSignature(false)
         setMessage("Document uploaded successfully.")
       } else {
@@ -88,11 +108,11 @@ function UploadDocument() {
           </div>
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Document details</h2>
-            <p className="text-sm text-gray-500">Add the document name and approval requirement.</p>
+            <p className="text-sm text-gray-500">Add file details, deadline, and approval requirement.</p>
           </div>
         </div>
 
-        <div className="grid gap-5">
+        <div className="grid gap-5 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-medium text-gray-700">Document title</span>
             <input
@@ -103,7 +123,56 @@ function UploadDocument() {
             />
           </label>
 
-          <label className="flex items-start gap-3 rounded-lg border p-4">
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Document type</span>
+            <select
+              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              value={documentType}
+              onChange={(event) => setDocumentType(event.target.value)}
+            >
+              <option>Report</option>
+              <option>Form</option>
+              <option>Image</option>
+              <option>PDF</option>
+              <option>Other</option>
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Document file</span>
+            <input
+              type="file"
+              className="mt-1 w-full rounded-lg border px-4 py-2 text-sm outline-none file:mr-3 file:rounded-md file:border-0 file:bg-red-50 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-red-700 focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              onChange={(event) => {
+                const file = event.target.files?.[0]
+                setSelectedFile(file || null)
+                setFileName(file?.name || "")
+              }}
+            />
+            {fileName && <p className="mt-1 text-xs text-gray-500">{fileName}</p>}
+          </label>
+
+          <label className="block">
+            <span className="text-sm font-medium text-gray-700">Due date</span>
+            <input
+              type="date"
+              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              value={dueDate}
+              onChange={(event) => setDueDate(event.target.value)}
+            />
+          </label>
+
+          <label className="block md:col-span-2">
+            <span className="text-sm font-medium text-gray-700">Supervisor email</span>
+            <input
+              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              placeholder="Assigned supervisor email"
+              value={assignedTo || defaultSupervisor}
+              onChange={(event) => setAssignedTo(event.target.value)}
+            />
+          </label>
+
+          <label className="flex items-start gap-3 rounded-lg border p-4 md:col-span-2">
             <input
               type="checkbox"
               checked={needSignature}
@@ -127,7 +196,7 @@ function UploadDocument() {
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end md:col-span-2">
             <button
               onClick={handleUpload}
               disabled={loading}

@@ -3,9 +3,11 @@ import { Routes, Route } from "react-router-dom"
 import Login from "./pages/login"
 import UploadDocument from "./pages/uploadDocument"
 import Documents from "./pages/documents"
+import DocumentReview from "./pages/documentReview"
 import Dashboard from "./pages/dashboard"
 import Notifications from "./components/notification"
 import Users from "./pages/users"
+import UserDetails from "./pages/userDetails"
 import Profile from "./pages/profile"
 import Layout from "./layout"
 
@@ -45,6 +47,15 @@ function App() {
       />
 
       <Route
+        path="/documents/:documentId"
+        element={
+          <Layout>
+            <DocumentReview />
+          </Layout>
+        }
+      />
+
+      <Route
         path="/notifications"
         element={
           <Layout>
@@ -58,6 +69,15 @@ function App() {
         element={
           <Layout>
             <Users />
+          </Layout>
+        }
+      />
+
+      <Route
+        path="/users/:userId"
+        element={
+          <Layout>
+            <UserDetails />
           </Layout>
         }
       />

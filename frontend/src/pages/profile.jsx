@@ -89,20 +89,20 @@ function Profile() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="page-title">Profile</h1>
+        <p className="page-subtitle">
           Manage your account details and internship assignment.
         </p>
       </div>
 
-      <div className="rounded-lg border bg-white p-6 shadow-sm">
-        <div className="mb-6 flex items-center gap-3 border-b pb-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-red-50 text-red-700">
+      <div className="glass-card p-6">
+        <div className="mb-6 flex items-center gap-3 border-b border-slate-200/80 pb-5">
+          <div className="glass-icon h-11 w-11">
             <UserRound className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Personal details</h2>
-            <p className="text-sm capitalize text-gray-500">
+            <h2 className="text-lg font-semibold text-slate-950">Personal details</h2>
+            <p className="text-sm capitalize text-slate-500">
               {form.role} account · {form.status}
             </p>
           </div>
@@ -110,18 +110,18 @@ function Profile() {
 
         <div className="grid gap-5 md:grid-cols-2">
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Name</span>
+            <span className="text-sm font-medium text-slate-700">Name</span>
             <input
-              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              className="glass-field mt-1 w-full"
               value={form.name}
               onChange={(event) => handleChange("name", event.target.value)}
             />
           </label>
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">Email</span>
+            <span className="text-sm font-medium text-slate-700">Email</span>
             <input
-              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              className="glass-field mt-1 w-full"
               value={form.email}
               onChange={(event) => handleChange("email", event.target.value)}
             />
@@ -129,9 +129,9 @@ function Profile() {
 
           {form.role === "intern" && (
             <label className="block">
-              <span className="text-sm font-medium text-gray-700">Supervisor email</span>
+              <span className="text-sm font-medium text-slate-700">Supervisor email</span>
               <input
-                className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+                className="glass-field mt-1 w-full"
                 value={form.supervisorEmail}
                 onChange={(event) => handleChange("supervisorEmail", event.target.value)}
               />
@@ -139,10 +139,10 @@ function Profile() {
           )}
 
           <label className="block">
-            <span className="text-sm font-medium text-gray-700">New password</span>
+            <span className="text-sm font-medium text-slate-700">New password</span>
             <input
               type="password"
-              className="mt-1 w-full rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
+              className="glass-field mt-1 w-full"
               placeholder="Leave blank to keep current password"
               value={form.password}
               onChange={(event) => handleChange("password", event.target.value)}
@@ -151,7 +151,7 @@ function Profile() {
         </div>
 
         {message && (
-          <div className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+          <div className="mt-5 rounded-lg border border-sky-200/70 bg-sky-50/70 px-4 py-3 text-sm font-medium text-sky-700">
             {message}
           </div>
         )}
@@ -160,7 +160,7 @@ function Profile() {
           <button
             onClick={handleSave}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-70"
+            className="glass-button px-5"
           >
             <Save className="h-4 w-4" />
             {loading ? "Saving..." : "Save Profile"}

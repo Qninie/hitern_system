@@ -53,89 +53,89 @@ function Dashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="page-title">Dashboard</h1>
+        <p className="page-subtitle">
           Manage internship documents from one consistent workspace.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Total</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{documents.length}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Total</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{documents.length}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Pending</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{counts.pending}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{counts.pending}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Approved</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{counts.approved}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Approved</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{counts.approved}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Rejected</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{counts.rejected}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Rejected</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{counts.rejected}</p>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Link
           to="/documents"
-          className="rounded-lg border bg-white p-5 shadow-sm transition hover:border-red-200 hover:shadow"
+          className="glass-card p-5 transition hover:bg-white/70 hover:shadow-md"
         >
-          <FileText className="h-6 w-6 text-red-700" />
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">
+          <FileText className="h-6 w-6 text-sky-600" />
+          <h2 className="mt-4 text-lg font-semibold text-slate-950">
             {canReview ? "Review documents" : "My documents"}
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Search, filter, view status, and keep document work moving.
           </p>
         </Link>
 
         <Link
           to="/upload"
-          className="rounded-lg border bg-white p-5 shadow-sm transition hover:border-red-200 hover:shadow"
+          className="glass-card p-5 transition hover:bg-white/70 hover:shadow-md"
         >
-          <Upload className="h-6 w-6 text-red-700" />
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">
+          <Upload className="h-6 w-6 text-sky-600" />
+          <h2 className="mt-4 text-lg font-semibold text-slate-950">
             Upload document
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Interns can submit new documents for supervisor or HR approval.
           </p>
         </Link>
 
         <Link
           to="/notifications"
-          className="rounded-lg border bg-white p-5 shadow-sm transition hover:border-red-200 hover:shadow"
+          className="glass-card p-5 transition hover:bg-white/70 hover:shadow-md"
         >
-          <ClipboardCheck className="h-6 w-6 text-red-700" />
-          <h2 className="mt-4 text-lg font-semibold text-gray-900">
+          <ClipboardCheck className="h-6 w-6 text-sky-600" />
+          <h2 className="mt-4 text-lg font-semibold text-slate-950">
             Notifications
           </h2>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-slate-500">
             Check document updates and pending approval reminders.
           </p>
         </Link>
       </div>
 
-      <div className="rounded-lg border bg-white p-5 shadow-sm">
-        <h2 className="font-semibold text-gray-900">Upcoming deadlines</h2>
-        <div className="mt-4 divide-y">
+      <div className="glass-card p-5">
+        <h2 className="font-semibold text-slate-950">Upcoming deadlines</h2>
+        <div className="glass-divider mt-4 divide-y">
           {urgentDocuments.length > 0 ? (
             urgentDocuments.map((document) => (
               <div key={document.id} className="flex items-center justify-between py-3">
                 <div>
-                  <p className="font-medium text-gray-900">{document.title}</p>
-                  <p className="text-sm text-gray-500">{document.uploaded_by}</p>
+                  <p className="font-medium text-slate-900">{document.title}</p>
+                  <p className="text-sm text-slate-500">{document.uploaded_by}</p>
                 </div>
-                <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+                <span className="rounded-full bg-white/60 px-3 py-1 text-xs font-semibold text-sky-700">
                   {document.due_date ? new Date(document.due_date).toLocaleDateString() : "No due date"}
                 </span>
               </div>
             ))
           ) : (
-            <p className="py-4 text-sm text-gray-500">No pending deadlines.</p>
+            <p className="py-4 text-sm text-slate-500">No pending deadlines.</p>
           )}
         </div>
       </div>

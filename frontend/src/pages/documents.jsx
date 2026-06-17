@@ -1,61 +1,114 @@
-import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
-import { Search, Filter, FileText, Check, X, Eye, RefreshCw } from "lucide-react";
+import { useCallback, useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import axios from "axios"
+import { Search, Filter, FileText, Check, X, Eye, RefreshCw, Trash2 } from "lucide-react"
 
 const getStoredUser = () => {
   try {
-    return JSON.parse(localStorage.getItem("hiternUser")) || {};
+    return JSON.parse(localStorage.getItem("hiternUser")) || {}
   } catch {
-    return {};
+    return {}
   }
-};
+}
+
+const formatDate = (dateValue) => {
+  if (!dateValue) return "No due date"
+
+  const date = new Date(dateValue)
+  const day = String(date.getDate()).padStart(2, "0")
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const year = date.getFullYear()
+
+  return `${day}-${month}-${year}`
+}
+
+const getDaysLeftText = (dateValue) => {
+  if (!dateValue) return ""
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateValue)
+  due.setHours(0, 0, 0, 0)
+  const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+
+  if (daysLeft < 0) return `${Math.abs(daysLeft)} day(s) overdue`
+  if (daysLeft === 0) return "Due today"
+  return `${daysLeft} day(s) left`
+}
+
+const getDeadlineText = (dateValue) => {
+  if (!dateValue) return "No due date"
+  return `${formatDate(dateValue)} | ${getDaysLeftText(dateValue)}`
+}
+
+const getDeadlineBadge = (dateValue) => {
+  if (!dateValue) return "bg-white/60 text-slate-700"
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const due = new Date(dateValue)
+  due.setHours(0, 0, 0, 0)
+  const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24))
+
+  if (daysLeft < 0) return "bg-slate-200 text-slate-800"
+  if (daysLeft <= 3) return "bg-amber-100 text-amber-800"
+  return "bg-emerald-100 text-emerald-800"
+}
+
+const getStatusBadge = (status) => {
+  const styles = {
+    pending: "border-amber-200 bg-amber-100 text-amber-800",
+    approved: "border-emerald-200 bg-emerald-100 text-emerald-800",
+    rejected: "border-slate-300 bg-slate-200 text-slate-800",
+  }
+
+  return styles[status] || "border-slate-200 bg-white/60 text-slate-800"
+}
 
 function Documents() {
-  const [documents, setDocuments] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [loading, setLoading] = useState(true);
-  const [actionMessage, setActionMessage] = useState("");
-  const user = getStoredUser();
-  const role = (user.role || "intern").toLowerCase();
-  const canReview = role === "supervisor" || role === "hr";
+  const [documents, setDocuments] = useState([])
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filterStatus, setFilterStatus] = useState("all")
+  const [loading, setLoading] = useState(true)
+  const [actionMessage, setActionMessage] = useState("")
+  const user = getStoredUser()
+  const role = (user.role || "intern").toLowerCase()
+  const canReview = role === "supervisor" || role === "hr"
+  const navigate = useNavigate()
 
   const fetchDocuments = useCallback(async () => {
     try {
-      setLoading(true);
+      setLoading(true)
       const res = await axios.get("http://localhost:5001/documents", {
         params: {
           role,
           email: user.email,
         },
-      });
+      })
+
       if (res.data.success) {
-        setDocuments(res.data.documents);
+        setDocuments(res.data.documents)
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setDocuments([])
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  }, [role, user.email]);
+  }, [role, user.email])
 
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    fetchDocuments()
+  }, [fetchDocuments])
 
   const filteredDocuments = documents.filter((doc) => {
-    const title = doc.title || "";
-    const uploader = doc.uploaded_by || "";
-    const matchesSearch = `${title} ${uploader}`
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" || doc.status === filterStatus;
-    const matchesRole =
-      canReview || !user.email || uploader.toLowerCase() === user.email.toLowerCase();
+    const title = doc.title || ""
+    const uploader = doc.uploaded_by || ""
+    const matchesSearch = `${title} ${uploader}`.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesFilter = filterStatus === "all" || doc.status === filterStatus
+    const matchesRole = canReview || !user.email || uploader.toLowerCase() === user.email.toLowerCase()
 
-    return matchesSearch && matchesFilter && matchesRole;
-  });
+    return matchesSearch && matchesFilter && matchesRole
+  })
 
   const documentCounts = documents.reduce(
     (counts, doc) => ({
@@ -63,80 +116,74 @@ function Documents() {
       [doc.status]: (counts[doc.status] || 0) + 1,
     }),
     { pending: 0, approved: 0, rejected: 0 }
-  );
+  )
 
-  const handleStatusChange = async (docId, status) => {
+  const handleStatusChange = async (doc, status) => {
+    const remarks = status === "rejected"
+      ? window.prompt("Comment for intern")
+      : ""
+
+    if (status === "rejected" && !remarks) return
+
     try {
-      const res = await axios.post(
-        "http://localhost:5001/approve-document",
-        {
-          documentId: docId,
-          status,
-        }
-      );
+      const res = await axios.post("http://localhost:5001/approve-document", {
+        documentId: doc.id,
+        status,
+        remarks,
+        reviewerEmail: user.email,
+      })
 
       if (res.data.success) {
-        setActionMessage(`Document ${status}.`);
-        fetchDocuments();
+        setActionMessage(`Document ${status}.`)
+        window.dispatchEvent(new Event("signature-count-changed"))
+        fetchDocuments()
+      } else {
+        setActionMessage(res.data.message || "Unable to update document.")
       }
     } catch {
-      setActionMessage(`Error updating document status.`);
+      setActionMessage("Unable to update document.")
     }
-  };
+  }
 
-  const handleView = (doc) => {
-    if (doc.file_path) {
-      window.open(`http://localhost:5001/uploads/${doc.file_path}`, "_blank", "noopener,noreferrer");
-      return;
+  const handleDelete = async (doc) => {
+    try {
+      const res = await axios.post("http://localhost:5001/delete-document", {
+        documentId: doc.id,
+        email: user.email,
+        role,
+      })
+
+      if (res.data.success) {
+        setActionMessage("Document deleted.")
+        fetchDocuments()
+      } else {
+        setActionMessage(res.data.message || "Unable to delete document.")
+      }
+    } catch {
+      setActionMessage("Unable to delete document.")
+    }
+  }
+
+  const canActOnDocument = (doc) => {
+    if (doc.status !== "pending") return false
+    if (role === "supervisor") {
+      return String(doc.assigned_to || "").toLowerCase() === String(user.email || "").toLowerCase()
     }
 
-    setActionMessage(`File: ${doc.file_path || "No file selected"} for "${doc.title}".`);
-  };
+    if (role === "hr") {
+      return doc.need_signature && !doc.assigned_to
+    }
 
-  const getDeadlineText = (dueDate) => {
-    if (!dueDate) return "No due date";
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-    const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-
-    if (daysLeft < 0) return `${Math.abs(daysLeft)} day(s) overdue`;
-    if (daysLeft === 0) return "Due today";
-    return `${daysLeft} day(s) left`;
-  };
-
-  const getDeadlineBadge = (dueDate) => {
-    if (!dueDate) return "bg-gray-100 text-gray-700";
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-    const daysLeft = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-
-    if (daysLeft < 0) return "bg-red-100 text-red-800";
-    if (daysLeft <= 3) return "bg-yellow-100 text-yellow-800";
-    return "bg-green-100 text-green-800";
-  };
-
-  const getStatusBadge = (status) => {
-    const styles = {
-      pending: "bg-yellow-100 text-yellow-800",
-      approved: "bg-green-100 text-green-800",
-      rejected: "bg-red-100 text-red-800",
-    };
-    return styles[status] || "bg-gray-100 text-gray-800";
-  };
+    return false
+  }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="page-title">
           {canReview ? "Document Review" : "My Documents"}
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="page-subtitle">
           {canReview
             ? "Review submitted documents and update approval status."
             : "Track documents you submitted for internship approval."}
@@ -144,38 +191,38 @@ function Documents() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Pending</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.pending}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{documentCounts.pending}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Approved</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.approved}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Approved</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{documentCounts.approved}</p>
         </div>
-        <div className="rounded-lg border bg-white p-5 shadow-sm">
-          <p className="text-sm font-medium text-gray-500">Rejected</p>
-          <p className="mt-2 text-3xl font-bold text-gray-900">{documentCounts.rejected}</p>
+        <div className="glass-card p-5">
+          <p className="text-sm font-medium text-slate-500">Rejected</p>
+          <p className="mt-2 text-3xl font-bold text-slate-950">{documentCounts.rejected}</p>
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 rounded-lg border bg-white p-4 shadow-sm md:flex-row">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+      <div className="glass-card flex flex-col gap-4 p-4 md:flex-row">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search title or uploader..."
             value={searchTerm}
-            className="w-full rounded-lg border py-2.5 pl-10 pr-4 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-            onChange={(e) => setSearchTerm(e.target.value)}
+            className="glass-field w-full pl-10 pr-4"
+            onChange={(event) => setSearchTerm(event.target.value)}
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-400" />
+          <Filter className="h-5 w-5 text-slate-400" />
           <select
             value={filterStatus}
-            className="rounded-lg border px-4 py-2.5 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100"
-            onChange={(e) => setFilterStatus(e.target.value)}
+            className="glass-field pr-10"
+            onChange={(event) => setFilterStatus(event.target.value)}
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -184,73 +231,56 @@ function Documents() {
           </select>
         </div>
 
-        <button
-          onClick={fetchDocuments}
-          className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-        >
+        <button onClick={fetchDocuments} className="glass-button-secondary">
           <RefreshCw className="h-4 w-4" />
           Refresh
         </button>
       </div>
 
       {actionMessage && (
-        <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-lg border border-sky-200/70 bg-sky-50/70 px-4 py-3 text-sm text-sky-700">
           {actionMessage}
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+      <div className="glass-card overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-gray-500">
-            Loading documents...
-          </div>
+          <div className="p-10 text-center text-slate-500">Loading documents...</div>
         ) : (
           <>
             <table className="w-full text-left">
-              <thead className="bg-gray-50 border-b">
+              <thead className="glass-table-head">
                 <tr>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Document
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Uploaded By
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Type / File
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Due Date
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Signature
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500">
-                    Status
-                  </th>
-                  <th className="px-6 py-4 text-xs font-semibold uppercase text-gray-500 text-right">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4">Document</th>
+                  <th className="px-6 py-4">Uploaded By</th>
+                  <th className="px-6 py-4">Type / File</th>
+                  <th className="px-6 py-4">Due Date</th>
+                  <th className="px-6 py-4">Signature</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Remarks</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y">
+              <tbody className="glass-divider divide-y">
                 {filteredDocuments.map((doc) => (
-                  <tr key={doc.id} className="hover:bg-gray-50/80">
-                    <td className="px-6 py-4 flex items-center gap-3">
-                      <div className="rounded-lg bg-red-50 p-2">
-                        <FileText className="w-5 h-5 text-red-600" />
+                  <tr key={doc.id} className="hover:bg-white/45">
+                    <td className="flex items-center gap-3 px-6 py-4">
+                      <div className="rounded-lg bg-white/55 p-2">
+                        <FileText className="h-5 w-5 text-sky-600" />
                       </div>
-                      <span className="font-medium text-gray-700">
+                      <button
+                        onClick={() => navigate(`/documents/${doc.id}`)}
+                        className="text-left font-medium text-sky-700 hover:text-sky-900 hover:underline"
+                      >
                         {doc.title}
-                      </span>
+                      </button>
                     </td>
 
-                    <td className="px-6 py-4 text-gray-500">
-                      {doc.uploaded_by}
-                    </td>
+                    <td className="px-6 py-4 text-slate-500">{doc.uploaded_by}</td>
 
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      <span className="block font-medium text-gray-700">
+                    <td className="px-6 py-4 text-sm text-slate-500">
+                      <span className="block font-medium text-slate-700">
                         {doc.document_type || "Document"}
                       </span>
                       <span className="block max-w-40 truncate">
@@ -259,57 +289,66 @@ function Documents() {
                     </td>
 
                     <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-medium ${getDeadlineBadge(
-                          doc.due_date
-                        )}`}
-                      >
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${getDeadlineBadge(doc.due_date)}`}>
                         {getDeadlineText(doc.due_date)}
                       </span>
                     </td>
 
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {doc.need_signature ? "Required" : "Not required"}
+                    <td className="px-6 py-4">
+                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                        doc.need_signature
+                          ? "border-sky-200 bg-sky-100 text-sky-800"
+                          : "border-slate-200 bg-white/70 text-slate-600"
+                      }`}>
+                        {doc.need_signature ? "Required" : "Not required"}
+                      </span>
                     </td>
 
                     <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(
-                          doc.status
-                        )}`}
-                      >
+                      <span className={`rounded-full border px-3 py-1 text-xs font-semibold capitalize ${getStatusBadge(doc.status)}`}>
                         {doc.status}
                       </span>
                     </td>
 
+                    <td className="px-6 py-4 text-sm text-slate-600">{doc.remarks || "-"}</td>
+
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <button
-                          onClick={() => handleView(doc)}
-                          title="View document"
-                          className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600"
+                          onClick={() => navigate(`/documents/${doc.id}`)}
+                          title="View document details"
+                          className="rounded-lg p-2 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
                         >
-                          <Eye className="w-5 h-5" />
+                          <Eye className="h-5 w-5" />
                         </button>
 
-                        {canReview && doc.status === "pending" && (
+                        {canActOnDocument(doc) && (
                           <>
                             <button
-                              onClick={() => handleStatusChange(doc.id, "approved")}
+                              onClick={() => handleStatusChange(doc, "approved")}
                               title="Approve document"
-                              className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600"
+                              className="rounded-lg p-2 text-slate-400 hover:bg-emerald-50 hover:text-emerald-600"
                             >
-                              <Check className="w-5 h-5" />
+                              <Check className="h-5 w-5" />
                             </button>
-
                             <button
-                              onClick={() => handleStatusChange(doc.id, "rejected")}
-                              title="Reject document"
-                              className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              onClick={() => handleStatusChange(doc, "rejected")}
+                              title="Wrong document / send back"
+                              className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                             >
-                              <X className="w-5 h-5" />
+                              <X className="h-5 w-5" />
                             </button>
                           </>
+                        )}
+
+                        {role === "intern" && (
+                          <button
+                            onClick={() => handleDelete(doc)}
+                            title="Delete document"
+                            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          >
+                            <Trash2 className="h-5 w-5" />
+                          </button>
                         )}
                       </div>
                     </td>
@@ -319,17 +358,13 @@ function Documents() {
             </table>
 
             {filteredDocuments.length === 0 && (
-              <div className="p-10 text-center text-sm text-gray-500">
-                No documents found.
-              </div>
+              <div className="p-10 text-center text-sm text-slate-500">No documents found.</div>
             )}
           </>
         )}
       </div>
     </div>
-  );
+  )
 }
 
-
-
-export default Documents;
+export default Documents

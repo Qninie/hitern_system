@@ -38,33 +38,33 @@ function Notifications() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="page-title">Notifications</h1>
+        <p className="page-subtitle">
           Document reminders and approval updates.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
+      <div className="glass-card overflow-hidden">
         {loading ? (
-          <div className="p-10 text-center text-sm text-gray-500">
+          <div className="p-10 text-center text-sm text-slate-500">
             Loading notifications...
           </div>
         ) : notifications.length > 0 ? (
-          <div className="divide-y">
+          <div className="glass-divider divide-y">
             {notifications.map((notification, index) => (
               <div key={`${notification}-${index}`} className="flex gap-3 p-5">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-700">
+                <div className="glass-icon h-10 w-10 shrink-0">
                   <Bell className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{notification}</p>
-                  <p className="mt-1 text-xs text-gray-500">Hitern System</p>
+                  <p className="text-sm font-medium text-slate-900">{notification}</p>
+                  <p className="mt-1 text-xs text-slate-500">Hitern System</p>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="p-10 text-center text-sm text-gray-500">
+          <div className="p-10 text-center text-sm text-slate-500">
             No notifications found.
           </div>
         )}

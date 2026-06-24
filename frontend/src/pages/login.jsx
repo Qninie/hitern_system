@@ -9,8 +9,8 @@ import {
 
 const roles = [
   { value: "intern", label: "Intern" },
-  { value: "supervisor", label: "SV" },
-  { value: "hr", label: "HR" },
+  { value: "supervisor", label: "Supervisor" },
+  { value: "hr", label: "Human Resources" },
 ]
 
 function Login() {
@@ -79,7 +79,7 @@ function Login() {
             <p className="text-sm font-medium text-sky-600">Welcome to</p>
             <h1 className="mt-1 text-3xl font-bold text-slate-950">Hitern System</h1>
             <p className="mt-3 text-sm text-slate-500">
-              Sign in with the account created by your HR Administrator.
+              Sign in with the account created by Human Resources.
             </p>
 
             <div className="mt-8">
@@ -135,7 +135,7 @@ function Login() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setMessage("Please contact HR Administrator to reset your password.")}
+                  onClick={() => setMessage("Please contact Human Resources to reset your password.")}
                   className="mt-2 text-xs font-semibold text-sky-700 hover:text-sky-900"
                 >
                   Forgot password?
@@ -189,7 +189,7 @@ function Login() {
               </div>
 
               <div className="absolute right-0 top-16 space-y-5">
-                {["HR creates accounts", "SV reviews progress", "Intern submits docs"].map((text) => (
+                {["Human Resources creates accounts", "Supervisor reviews progress", "Intern submits docs"].map((text) => (
                   <div key={text} className="rounded-2xl border border-white/20 bg-white/15 px-4 py-3 text-xs font-semibold backdrop-blur">
                     {text}
                   </div>
@@ -198,7 +198,7 @@ function Login() {
             </div>
 
             <p className="mt-8 max-w-sm text-center text-sm text-white/85">
-              HR controls access, supervisors track assigned interns, and interns submit documents in one workflow.
+              Human Resources controls access, supervisors track assigned interns, and interns submit documents in one workflow.
             </p>
           </div>
         </section>

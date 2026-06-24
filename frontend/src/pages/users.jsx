@@ -179,9 +179,9 @@ function Users() {
     return (
       <div className="glass-card p-8 text-center">
         <UserRound className="mx-auto h-10 w-10 text-sky-600" />
-        <h1 className="mt-4 text-xl font-bold text-slate-950">HR access only</h1>
+        <h1 className="mt-4 text-xl font-bold text-slate-950">Human Resources access only</h1>
         <p className="mt-2 text-sm text-slate-500">
-          User accounts are created and managed by HR Administrator.
+          User accounts are created and managed by Human Resources.
         </p>
       </div>
     )
@@ -234,7 +234,7 @@ function Users() {
           >
             <option value="intern">Intern</option>
             <option value="supervisor">Supervisor</option>
-            <option value="hr">HR Admin</option>
+            <option value="hr">Human Resources</option>
           </select>
           <button onClick={handleCreateUser} className="glass-button">
             <Plus className="h-4 w-4" />
@@ -286,7 +286,7 @@ function Users() {
             >
               <option value="intern">Intern</option>
               <option value="supervisor">Supervisor</option>
-              <option value="hr">HR Admin</option>
+              <option value="hr">Human Resources</option>
             </select>
             <select
               className="glass-field pr-10"
@@ -360,36 +360,40 @@ function Users() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 sm:flex">
-            {[
-              { value: "all", label: "All" },
-              { value: "intern", label: "Intern" },
-              { value: "supervisor", label: "SV" },
-              { value: "hr", label: "HR" },
-            ].map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setRoleFilter(item.value)}
-                className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
-                  roleFilter === item.value
-                    ? "border-sky-300 bg-sky-200 text-slate-950"
-                    : "border-slate-200 bg-white/70 text-slate-600 hover:bg-sky-50 hover:text-sky-800"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <div className="overflow-x-auto pb-1">
+            <div className="table-toolbar w-full">
+              <div className="flex shrink-0 gap-2">
+                {[
+                  { value: "all", label: "All" },
+                  { value: "intern", label: "Intern" },
+                  { value: "supervisor", label: "Supervisor" },
+                  { value: "hr", label: "Human Resources" },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => setRoleFilter(item.value)}
+                    className={`h-11 whitespace-nowrap rounded-lg border px-4 text-sm font-semibold transition ${
+                      roleFilter === item.value
+                        ? "border-sky-300 bg-sky-200 text-slate-950"
+                        : "border-slate-200 bg-white/70 text-slate-600 hover:bg-sky-50 hover:text-sky-800"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
 
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
-            <input
-              className="glass-field w-full pl-10"
-              placeholder="Search by name"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
+              <div className="table-control min-w-[280px] flex-1">
+                <Search className="table-control-icon" />
+                <input
+                  className="glass-field h-11 w-full pl-10"
+                  placeholder="Search by name"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
+            </div>
           </div>
         </div>
 

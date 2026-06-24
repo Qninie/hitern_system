@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import axios from "axios"
-import { ArrowLeft, FileText, UserRound } from "lucide-react"
+import { ArrowLeft, FileText, Search, UserRound } from "lucide-react"
 
 const getStoredUser = () => {
   try {
@@ -19,6 +19,7 @@ function UserDetails() {
   const [details, setDetails] = useState(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState("")
+  const [searchTerm, setSearchTerm] = useState("")
 
   const fetchDetails = useCallback(async () => {
     if (!isHr) return
@@ -71,6 +72,14 @@ function UserDetails() {
 
   const selectedUser = details.user
   const role = (selectedUser.role || "").toLowerCase()
+  const filteredDocuments = (details.documents || []).filter((document) =>
+    `${document.title || ""} ${document.document_type || ""}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  )
+  const filteredInterns = (details.interns || []).filter((intern) =>
+    (intern.name || "").toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="space-y-6">
@@ -116,7 +125,18 @@ function UserDetails() {
               Uploaded Documents ({details.documents?.length || 0})
             </h2>
           </div>
-          {details.documents?.length ? (
+          <div className="border-b border-slate-200/80 p-4">
+            <div className="table-control w-full">
+              <Search className="table-control-icon" />
+              <input
+                className="glass-field h-11 w-full pl-10"
+                placeholder="Search document name"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+          </div>
+          {filteredDocuments.length ? (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead className="glass-table-head">
@@ -128,7 +148,7 @@ function UserDetails() {
                   </tr>
                 </thead>
                 <tbody className="glass-divider divide-y">
-                  {details.documents.map((document) => (
+                  {filteredDocuments.map((document) => (
                     <tr key={document.id} className="hover:bg-sky-50/50">
                       <td className="px-5 py-4">
                         <button
@@ -158,9 +178,20 @@ function UserDetails() {
             <UserRound className="h-5 w-5 text-sky-600" />
             <h2 className="font-semibold text-slate-950">Assigned Interns ({details.interns?.length || 0})</h2>
           </div>
-          {details.interns?.length ? (
+          <div className="border-b border-slate-200/80 p-4">
+            <div className="table-control w-full">
+              <Search className="table-control-icon" />
+              <input
+                className="glass-field h-11 w-full pl-10"
+                placeholder="Search intern name"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
+            </div>
+          </div>
+          {filteredInterns.length ? (
             <div className="divide-y divide-slate-200/70">
-              {details.interns.map((intern) => (
+              {filteredInterns.map((intern) => (
                 <button
                   key={intern.id}
                   onClick={() => navigate(`/users/${intern.id}`)}

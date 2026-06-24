@@ -3,6 +3,8 @@ import { Link, NavLink } from "react-router-dom";
 import axios from "axios";
 import {
   Bell,
+  ChevronLeft,
+  ChevronRight,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -40,10 +42,25 @@ function Layout({ children }) {
   const displayName = user?.name || user?.email || "Hitern User";
   const [signatureCount, setSignatureCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem("hiternSidebarCollapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
 
   const handleLogout = () => {
     localStorage.removeItem("hiternUser");
     window.location.href = "/login";
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed((current) => {
+      const nextValue = !current;
+      localStorage.setItem("hiternSidebarCollapsed", String(nextValue));
+      return nextValue;
+    });
   };
 
   useEffect(() => {
@@ -85,16 +102,34 @@ function Layout({ children }) {
   return (
     <div className="app-surface lg:flex">
 
-      <aside className="glass-panel text-slate-800 lg:fixed lg:inset-y-0 lg:left-0 lg:m-5 lg:w-72 lg:rounded-2xl">
-        <div className="flex h-full flex-col p-5">
-          <div className="mb-8">
-            <p className="text-xs font-semibold uppercase tracking-widest text-sky-600">
-              Hitern System
-            </p>
-            <h1 className="mt-2 text-2xl font-bold text-slate-950">Document Center</h1>
+      <aside
+        className={`glass-panel overflow-visible text-slate-800 transition-[width] duration-300 lg:fixed lg:inset-y-0 lg:left-0 lg:z-30 lg:m-5 lg:rounded-2xl ${
+          isSidebarCollapsed ? "lg:w-20" : "lg:w-72"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/80 bg-white/75 text-slate-600 shadow-lg shadow-sky-900/15 backdrop-blur-xl transition hover:bg-sky-100 hover:text-sky-800 lg:flex"
+          title={isSidebarCollapsed ? "Expand navigation" : "Collapse navigation"}
+        >
+          {isSidebarCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </button>
+
+        <div className={`flex h-full flex-col ${isSidebarCollapsed ? "p-3" : "p-5"}`}>
+          <div className="mb-8 flex justify-center">
+            {isSidebarCollapsed ? (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full border border-white/90 bg-gradient-to-br from-white/90 to-sky-100/80 text-base font-bold text-sky-700 shadow-lg shadow-sky-900/10 backdrop-blur-xl">
+                H
+              </div>
+            ) : (
+              <div className="flex w-full items-center justify-center rounded-full border border-white/90 bg-gradient-to-br from-white/85 to-sky-100/70 px-5 py-4 shadow-lg shadow-sky-900/10 backdrop-blur-xl">
+                <span className="text-xl font-bold text-slate-950">Hitern</span>
+              </div>
+            )}
           </div>
 
-          <nav className="space-y-2">
+          <nav className={`space-y-2 ${isSidebarCollapsed ? "flex flex-col items-center" : ""}`}>
             {visibleNavItems.map((item) => {
               const Icon = item.icon;
 
@@ -104,43 +139,67 @@ function Layout({ children }) {
                   to={item.to}
                   end={item.to === "/"}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                    `group relative flex items-center text-sm font-medium transition ${
+                      isSidebarCollapsed
+                        ? "h-12 w-12 justify-center rounded-full border border-white/70 px-0 py-0 shadow-sm backdrop-blur-xl"
+                        : "gap-3 rounded-lg px-3 py-2.5"
+                    } ${
                       isActive
-                        ? "bg-sky-200 text-slate-950 shadow-sm"
-                        : "text-slate-600 hover:bg-white/45 hover:text-sky-700"
+                        ? "bg-sky-200/90 text-slate-950 shadow-md shadow-sky-900/10"
+                        : "bg-white/35 text-slate-600 hover:bg-white/75 hover:text-sky-700"
                     }`
                   }
                 >
                   <Icon className="h-5 w-5" />
-                  {item.label}
+                  {!isSidebarCollapsed && item.label}
+                  {isSidebarCollapsed && (
+                    <span className="pointer-events-none absolute left-14 top-1/2 z-50 hidden -translate-y-1/2 whitespace-nowrap rounded-md border border-slate-200 bg-white/95 px-3 py-2 text-xs font-semibold text-slate-700 shadow-xl shadow-sky-900/15 backdrop-blur-xl group-hover:block">
+                      {item.label}
+                    </span>
+                  )}
                 </NavLink>
               );
             })}
           </nav>
 
-          <div className="mt-auto rounded-lg border border-slate-200/80 bg-white/70 p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="glass-icon h-10 w-10">
+          <div className={`mt-auto border border-white/80 bg-white/55 shadow-sm backdrop-blur-xl ${
+            isSidebarCollapsed ? "rounded-full p-2" : "rounded-lg p-4"
+          }`}>
+            <div className={`flex items-center ${isSidebarCollapsed ? "justify-center" : "gap-3"}`}>
+              <div className={`glass-icon shrink-0 ${isSidebarCollapsed ? "h-10 w-10 rounded-full" : "h-10 w-10"}`}>
                 <UserRound className="h-5 w-5" />
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
-                <p className="text-xs capitalize text-slate-500">{role}</p>
-              </div>
+              {!isSidebarCollapsed && (
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">{displayName}</p>
+                  <p className="text-xs capitalize text-slate-500">
+                    {role === "hr" ? "Human Resources" : role}
+                  </p>
+                </div>
+              )}
             </div>
 
             <button
               onClick={handleLogout}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200/80 bg-white/70 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-sky-50"
+              className={`flex items-center justify-center border border-white/80 bg-white/65 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-sky-50 ${
+                isSidebarCollapsed
+                  ? "mx-auto mt-2 h-10 w-10 rounded-full p-0"
+                  : "mt-4 w-full gap-2 rounded-lg px-3 py-2"
+              }`}
+              title={isSidebarCollapsed ? "Logout" : undefined}
             >
               <LogOut className="h-4 w-4" />
-              Logout
+              {!isSidebarCollapsed && "Logout"}
             </button>
           </div>
         </div>
       </aside>
 
-      <main className="min-h-screen flex-1 p-4 sm:p-6 lg:ml-80 lg:p-8">
+      <main
+        className={`relative z-0 min-h-screen min-w-0 flex-1 p-4 transition-[margin] duration-300 sm:p-6 lg:p-8 ${
+          isSidebarCollapsed ? "lg:ml-28" : "lg:ml-80"
+        }`}
+      >
         <div className="relative mb-5 flex justify-end">
           <button
             type="button"

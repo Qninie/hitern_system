@@ -101,7 +101,7 @@ function Dashboard() {
             Upload document
           </h2>
           <p className="mt-2 text-sm text-slate-500">
-            Interns can submit new documents for supervisor or HR approval.
+            Interns can submit new documents for supervisor or Human Resources approval.
           </p>
         </Link>
 
